@@ -19,10 +19,11 @@ func TestMainHandlerWhenCountMoreThanTotal(t *testing.T) {
 	handler.ServeHTTP(responseRecorder, req)
 
 	// здесь нужно добавить необходимые проверки
-	body := responseRecorder.Body.String()
-	list := strings.Split(body, ",")
+
+	list := strings.Split(responseRecorder.Body.String(), ",")
 
 	assert.Len(t, list, totalCount)
+	require.Equal(t, http.StatusOK, responseRecorder.Code, "Unexepected status code")
 
 }
 
@@ -33,21 +34,17 @@ func TestMainHandlerWhenStatusOKAndBodyNotEmpty(t *testing.T) {
 	handler := http.HandlerFunc(MainHandle)
 	handler.ServeHTTP(responseRecorder, req)
 
-	require.Equal(t, 200, responseRecorder.Code)
-	assert.NotNil(t, responseRecorder.Body)
+	require.Equal(t, http.StatusOK, responseRecorder.Code)
+	assert.NotEmpty(t, responseRecorder.Body)
 }
 
 func TestMainHandlerWhenSityValueRight(t *testing.T) {
-	req := httptest.NewRequest("GET", "/cafe?city=ufa", nil)
+	req := httptest.NewRequest("GET", "/cafe?count=4&city=ufa", nil)
 
 	responseRecorder := httptest.NewRecorder()
 	handler := http.HandlerFunc(MainHandle)
 	handler.ServeHTTP(responseRecorder, req)
 
-	city := "ufa"
-
-	for k := range cafeList {
-		require.Equal(t, k, city)
-	}
-
+	require.Equal(t, http.StatusBadRequest, responseRecorder.Code)
+	require.Equal(t, responseRecorder.Body.String(), "wrong city value")
 }
